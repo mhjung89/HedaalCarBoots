@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data
 {
@@ -9,9 +10,17 @@ namespace Infrastructure.Data
         {
         }
 
+        public DbSet<TradeItem> TradeItems { get; set; } = default!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder
+                .Entity<TradeItem>()
+                    .ToTable("TradeItem")
+                    .Property(p => p.Price)
+                        .HasColumnType("decimal(18,2)");
         }
     }
 }
