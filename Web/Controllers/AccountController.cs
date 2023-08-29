@@ -1,6 +1,6 @@
 ﻿using Application.Account;
+using Core.Authentication;
 using Core.Authorization;
-using Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Web.Models.Account;
