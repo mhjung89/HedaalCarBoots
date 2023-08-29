@@ -1,18 +1,31 @@
+using Core.Authorization;
+using Core.Entities;
+using Infrastructure.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services
+    .AddDbContext<HCBIdentityDbContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services
+    .AddIdentity<HCBUser, IdentityRole>()
+    .AddEntityFrameworkStores<HCBIdentityDbContext>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = CookieAuthenticationDefaults.CookiePrefix + "HedaalCarBoots";
+});
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+
+await SeedData(builder.Services);
 
 var app = builder.Build();
 
@@ -39,6 +52,46 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
 app.Run();
+
+static async Task SeedData(IServiceCollection services)
+{
+    using var serviceProvider = services.BuildServiceProvider();
+
+    var userManager = serviceProvider.GetRequiredService<UserManager<HCBUser>>();
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    bool adminRoleExists = await roleManager.RoleExistsAsync(HCBRoles.Admin);
+    if (!adminRoleExists)
+    {
+        await roleManager.CreateAsync(new IdentityRole(HCBRoles.Admin));
+    }
+
+
+    bool basicRoleExists = await roleManager.RoleExistsAsync(HCBRoles.Basic);
+    if (!basicRoleExists)
+    {
+        await roleManager.CreateAsync(new IdentityRole(HCBRoles.Basic));
+    }
+
+    HCBUser adminUser = new HCBUser
+    {
+        UserName = "admin@hedaal.com",
+        Email = "admin@hedaal.com"
+    };
+
+    bool adminUserExists = await userManager.FindByEmailAsync(adminUser.Email) != null;
+
+    if (adminUserExists)
+    {
+        return;
+    }
+
+    IdentityResult adminUserCreated = await userManager.CreateAsync(adminUser, "@dmiN1234!");
+
+    if (adminUserCreated.Succeeded)
+    {
+        await userManager.AddToRoleAsync(adminUser, HCBRoles.Admin);
+    }
+}
