@@ -10,7 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services
-    .AddDbContext<HCBIdentityDbContext>(options => options.UseSqlServer(connectionString));
+    .AddDbContext<HCBIdentityDbContext>(options => options.UseSqlServer(connectionString))
+    .AddDbContext<HCBDbContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services
     .AddIdentity<HCBUser, IdentityRole>()
