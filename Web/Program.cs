@@ -4,18 +4,18 @@ using Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services
-    .AddDbContext<HCBIdentityDbContext>(options => options.UseSqlServer(connectionString))
-    .AddDbContext<HCBDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<HCBDbContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services
-    .AddIdentity<HCBUser, IdentityRole>()
-    .AddEntityFrameworkStores<HCBIdentityDbContext>();
+    .AddIdentity<ApplicationUser, ApplicationRole>()
+    .AddEntityFrameworkStores<HCBDbContext>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -24,7 +24,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddControllersWithViews();
+builder.Services
+    .AddControllersWithViews()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
+    });
 
 await SeedData(builder.Services);
 
@@ -60,23 +65,23 @@ static async Task SeedData(IServiceCollection services)
 {
     using var serviceProvider = services.BuildServiceProvider();
 
-    var userManager = serviceProvider.GetRequiredService<UserManager<HCBUser>>();
-    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
     bool adminRoleExists = await roleManager.RoleExistsAsync(HCBRoles.Admin);
     if (!adminRoleExists)
     {
-        await roleManager.CreateAsync(new IdentityRole(HCBRoles.Admin));
+        await roleManager.CreateAsync(new ApplicationRole(HCBRoles.Admin));
     }
 
 
     bool basicRoleExists = await roleManager.RoleExistsAsync(HCBRoles.Basic);
     if (!basicRoleExists)
     {
-        await roleManager.CreateAsync(new IdentityRole(HCBRoles.Basic));
+        await roleManager.CreateAsync(new ApplicationRole(HCBRoles.Basic));
     }
 
-    HCBUser adminUser = new HCBUser
+    ApplicationUser adminUser = new ApplicationUser
     {
         UserName = "admin@hedaal.com",
         Email = "admin@hedaal.com"
@@ -84,15 +89,31 @@ static async Task SeedData(IServiceCollection services)
 
     bool adminUserExists = await userManager.FindByEmailAsync(adminUser.Email) != null;
 
-    if (adminUserExists)
+    if (!adminUserExists)
     {
-        return;
+        IdentityResult adminUserCreated = await userManager.CreateAsync(adminUser, "@dmiN1234!");
+
+        if (adminUserCreated.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, HCBRoles.Admin);
+        }
     }
 
-    IdentityResult adminUserCreated = await userManager.CreateAsync(adminUser, "@dmiN1234!");
-
-    if (adminUserCreated.Succeeded)
+    ApplicationUser basicUser = new ApplicationUser
     {
-        await userManager.AddToRoleAsync(adminUser, HCBRoles.Admin);
+        UserName = "hedaal@hedaal.com",
+        Email = "hedaal@hedaal.com"
+    };
+
+    bool basicUserExists = await userManager.FindByEmailAsync(basicUser.Email) != null;
+
+    if (!basicUserExists)
+    {
+        IdentityResult basicUserCreated = await userManager.CreateAsync(basicUser, "B@sic1234!");
+
+        if (basicUserCreated.Succeeded)
+        {
+            await userManager.AddToRoleAsync(basicUser, HCBRoles.Basic);
+        }
     }
 }

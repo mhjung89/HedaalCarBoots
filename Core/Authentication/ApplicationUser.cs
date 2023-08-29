@@ -2,7 +2,7 @@
 
 namespace Core.Authentication
 {
-    public class HCBUser : IdentityUser
+    public class ApplicationUser : IdentityUser<int>
     {
         public string Nickname { get; set; } = string.Empty;
     }

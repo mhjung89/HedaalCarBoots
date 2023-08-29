@@ -9,17 +9,17 @@ namespace Web.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly SignInManager<HCBUser> _signInManager;
-        private readonly UserManager<HCBUser> _userManager;
-        private readonly IUserStore<HCBUser> _userStore;
-        private readonly IUserEmailStore<HCBUser> _emailStore;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserStore<ApplicationUser> _userStore;
+        private readonly IUserEmailStore<ApplicationUser> _emailStore;
 
-        public AccountController(SignInManager<HCBUser> signInManager, UserManager<HCBUser> userManager, IUserStore<HCBUser> userStore)
+        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, IUserStore<ApplicationUser> userStore)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _userStore = userStore;
-            _emailStore = (IUserEmailStore<HCBUser>)_userStore;
+            _emailStore = (IUserEmailStore<ApplicationUser>)_userStore;
         }
 
         [HttpGet]
@@ -89,7 +89,7 @@ namespace Web.Controllers
 
             if (ModelState.IsValid)
             {
-                HCBUser user = new HCBUser
+                ApplicationUser user = new ApplicationUser
                 {
                     Nickname = input.Nickname
                 };
