@@ -1,5 +1,4 @@
-﻿using Core.Entities;
-using Infrastructure.Data;
+﻿using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,9 +16,22 @@ namespace Web.Controllers
         // GET: Items
         public async Task<IActionResult> Index()
         {
-              return _context.TradeItems != null ? 
-                          View(await _context.TradeItems.ToListAsync()) :
-                          Problem("Entity set 'HCBDbContext.TradeItems'  is null.");
+            if (_context.TradeItems == null)
+            {
+                return Problem("Entity set 'HCBDbContext.TradeItems'  is null.");
+            }
+
+            var model = await _context.TradeItems.Select(x => new TradeItemDto
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description,
+                Price = x.Price,
+                Negotiable = x.Negotiable,
+                IsOwner = x.SellerId == User.GetUserId()
+            }).ToListAsync();
+
+            return View(model);
         }
 
         // GET: Items/Details/5
@@ -30,20 +42,30 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            var tradeItem = await _context.TradeItems
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var tradeItem = await _context.TradeItems.FirstOrDefaultAsync(m => m.Id == id);
+
             if (tradeItem == null)
             {
                 return NotFound();
             }
 
-            return View(tradeItem);
+            var model = new TradeItemDto
+            {
+                Id = tradeItem.Id,
+                Name = tradeItem.Name,
+                Description = tradeItem.Description,
+                Price = tradeItem.Price,
+                Negotiable = tradeItem.Negotiable,
+                IsOwner = tradeItem.SellerId == User.GetUserId()
+            };
+
+            return View(model);
         }
 
         // GET: Items/Create
         public IActionResult Create()
         {
-            return View();
+            return View(new TradeItemInputDto());
         }
 
         // POST: Items/Create
@@ -51,15 +73,27 @@ namespace Web.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description,Price")] TradeItem tradeItem)
+        public async Task<IActionResult> Create(TradeItemInputDto input)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(tradeItem);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return View(input);
             }
-            return View(tradeItem);
+
+            TradeItem tradeItem = new TradeItem
+            {
+                Name = input.Name,
+                Description = input.Description,
+                Price = input.Price,
+                Negotiable = input.Negotiable,
+                SellerId = User.GetUserId()
+            };
+
+            _context.Add(tradeItem);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Items/Edit/5
@@ -71,11 +105,28 @@ namespace Web.Controllers
             }
 
             var tradeItem = await _context.TradeItems.FindAsync(id);
+
             if (tradeItem == null)
             {
                 return NotFound();
             }
-            return View(tradeItem);
+
+            if (tradeItem.SellerId != User.GetUserId())
+            {
+                return Forbid();
+            }
+
+            var model = new TradeItemDto
+            {
+                Id = tradeItem.Id,
+                Name = tradeItem.Name,
+                Description = tradeItem.Description,
+                Price = tradeItem.Price,
+                Negotiable = tradeItem.Negotiable,
+                IsOwner = tradeItem.SellerId == User.GetUserId()
+            };
+
+            return View(model);
         }
 
         // POST: Items/Edit/5
@@ -83,34 +134,54 @@ namespace Web.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price")] TradeItem tradeItem)
+        public async Task<IActionResult> Edit(int id, TradeItemInputDto input)
         {
-            if (id != tradeItem.Id)
+            if (id != input.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var tradeItem = await _context.TradeItems.FindAsync(id);
+
+            if (tradeItem == null)
             {
-                try
-                {
-                    _context.Update(tradeItem);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!TradeItemExists(tradeItem.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            return View(tradeItem);
+
+            if (tradeItem.SellerId != User.GetUserId())
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(input);
+            }
+
+            try
+            {
+                tradeItem.Name = input.Name;
+                tradeItem.Description = input.Description;
+                tradeItem.Price = input.Price;
+                tradeItem.Negotiable = input.Negotiable;
+
+                _context.Update(tradeItem);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TradeItemExists(input.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Items/Delete/5
@@ -121,14 +192,28 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            var tradeItem = await _context.TradeItems
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var tradeItem = await _context.TradeItems.FirstOrDefaultAsync(m => m.Id == id);
+
             if (tradeItem == null)
             {
                 return NotFound();
             }
 
-            return View(tradeItem);
+            if (tradeItem.SellerId != User.GetUserId())
+            {
+                return Forbid();
+            }
+
+            TradeItemInputDto model = new TradeItemInputDto
+            {
+                Id = tradeItem.Id,
+                Name = tradeItem.Name,
+                Description = tradeItem.Description,
+                Price = tradeItem.Price,
+                Negotiable = tradeItem.Negotiable
+            };
+
+            return View(model);
         }
 
         // POST: Items/Delete/5
@@ -140,19 +225,29 @@ namespace Web.Controllers
             {
                 return Problem("Entity set 'HCBDbContext.TradeItems'  is null.");
             }
+
             var tradeItem = await _context.TradeItems.FindAsync(id);
-            if (tradeItem != null)
+
+            if (tradeItem == null)
             {
-                _context.TradeItems.Remove(tradeItem);
+                return NotFound();
             }
-            
+
+            if (tradeItem.SellerId != User.GetUserId())
+            {
+                return Forbid();
+            }
+
+            _context.TradeItems.Remove(tradeItem);
+
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool TradeItemExists(int id)
         {
-          return (_context.TradeItems?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.TradeItems?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
