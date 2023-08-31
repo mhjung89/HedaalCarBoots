@@ -23,6 +23,11 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.Name = CookieAuthenticationDefaults.CookiePrefix + "HedaalCarBoots";
 });
 
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+});
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddAuthorization(options =>
