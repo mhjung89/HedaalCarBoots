@@ -21,7 +21,7 @@ namespace Web.Controllers
                 return Problem("Entity set 'HCBDbContext.TradeItems'  is null.");
             }
 
-            var model = await _context.TradeItems.Select(x => new TradeItemDto
+            var tradeItems = await _context.TradeItems.Select(x => new TradeItemDto
             {
                 Id = x.Id,
                 Name = x.Name,
@@ -31,7 +31,7 @@ namespace Web.Controllers
                 IsOwner = x.SellerId == User.GetUserId()
             }).ToListAsync();
 
-            return View(model);
+            return View(tradeItems);
         }
 
         // GET: Items/Details/5
@@ -42,24 +42,22 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            var tradeItem = await _context.TradeItems.FirstOrDefaultAsync(m => m.Id == id);
+            var tradeItem = await _context.TradeItems.Select(x => new TradeItemDto
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description,
+                Price = x.Price,
+                Negotiable = x.Negotiable,
+                IsOwner = x.SellerId == User.GetUserId()
+            }).FirstOrDefaultAsync(m => m.Id == id);
 
             if (tradeItem == null)
             {
                 return NotFound();
             }
 
-            var model = new TradeItemDto
-            {
-                Id = tradeItem.Id,
-                Name = tradeItem.Name,
-                Description = tradeItem.Description,
-                Price = tradeItem.Price,
-                Negotiable = tradeItem.Negotiable,
-                IsOwner = tradeItem.SellerId == User.GetUserId()
-            };
-
-            return View(model);
+            return View(tradeItem);
         }
 
         // GET: Items/Create
@@ -104,29 +102,27 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            var tradeItem = await _context.TradeItems.FindAsync(id);
+            var tradeItem = await _context.TradeItems.Select(x => new TradeItemDto
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description,
+                Price = x.Price,
+                Negotiable = x.Negotiable,
+                IsOwner = x.SellerId == User.GetUserId()
+            }).FirstOrDefaultAsync(m => m.Id == id);
 
             if (tradeItem == null)
             {
                 return NotFound();
             }
 
-            if (tradeItem.SellerId != User.GetUserId())
+            if (!tradeItem.IsOwner)
             {
                 return Forbid();
             }
 
-            var model = new TradeItemDto
-            {
-                Id = tradeItem.Id,
-                Name = tradeItem.Name,
-                Description = tradeItem.Description,
-                Price = tradeItem.Price,
-                Negotiable = tradeItem.Negotiable,
-                IsOwner = tradeItem.SellerId == User.GetUserId()
-            };
-
-            return View(model);
+            return View(tradeItem);
         }
 
         // POST: Items/Edit/5
@@ -192,28 +188,27 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            var tradeItem = await _context.TradeItems.FirstOrDefaultAsync(m => m.Id == id);
+            var tradeItem = await _context.TradeItems.Select(x => new TradeItemDto
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description,
+                Price = x.Price,
+                Negotiable = x.Negotiable,
+                IsOwner = x.SellerId == User.GetUserId()
+            }).FirstOrDefaultAsync(m => m.Id == id);
 
             if (tradeItem == null)
             {
                 return NotFound();
             }
 
-            if (tradeItem.SellerId != User.GetUserId())
+            if (!tradeItem.IsOwner)
             {
                 return Forbid();
             }
 
-            TradeItemInputDto model = new TradeItemInputDto
-            {
-                Id = tradeItem.Id,
-                Name = tradeItem.Name,
-                Description = tradeItem.Description,
-                Price = tradeItem.Price,
-                Negotiable = tradeItem.Negotiable
-            };
-
-            return View(model);
+            return View(tradeItem);
         }
 
         // POST: Items/Delete/5
