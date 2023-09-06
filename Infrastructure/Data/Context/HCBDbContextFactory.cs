@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Infrastructure.Data
+namespace Infrastructure.Data.Context
 {
     public class HCBDbContextFactory : IDesignTimeDbContextFactory<HCBDbContext>
     {

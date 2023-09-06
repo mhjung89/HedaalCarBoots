@@ -4,7 +4,7 @@ using Core.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Data
+namespace Infrastructure.Data.Context
 {
     public class HCBDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
     {

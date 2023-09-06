@@ -1,14 +1,20 @@
 using Core.Authentication;
 using Core.Authorization;
-using Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Application;
+using Infrastructure.Data.Context;
+using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddApplication()
+    .AddInfrastructure();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
