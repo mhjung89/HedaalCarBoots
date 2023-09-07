@@ -63,7 +63,16 @@ namespace Web.Controllers
                 return Forbid();
             }
 
-            return View(tradeItem);
+            var input = new TradeItemInputDto
+            {
+                Id = tradeItem.Id,
+                Name = tradeItem.Name,
+                Description = tradeItem.Description,
+                Price = tradeItem.Price,
+                Negotiable = tradeItem.Negotiable
+            };
+
+            return View(input);
         }
 
         [HttpPost]
