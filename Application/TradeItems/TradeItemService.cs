@@ -1,5 +1,6 @@
 ﻿using Core.Entities;
 using Core.Interfaces;
+using Core.Types;
 using System.Security.Claims;
 
 namespace Application.TradeItems
@@ -11,6 +12,17 @@ namespace Application.TradeItems
         public TradeItemService(IRepository<TradeItem> repository)
         {
             _repository = repository;
+        }
+
+        public async Task ChangeStatusAsync(int id, ETradeItemStatus reserved)
+        {
+            TradeItem? tradeItem = await _repository.GetByIdAsync(id);
+
+            tradeItem!.Status = reserved;
+
+            _repository.Update(tradeItem);
+
+            await _repository.SaveChangesAsync();
         }
 
         public async Task CreateAsync(TradeItemInputDto input, ClaimsPrincipal user)
@@ -43,6 +55,7 @@ namespace Application.TradeItems
             return tradeItems.Select(x => new TradeItemDto
             {
                 Id = x.Id,
+                Status = x.Status,
                 Name = x.Name,
                 Description = x.Description,
                 Price = x.Price,
@@ -63,6 +76,7 @@ namespace Application.TradeItems
             return new TradeItemDto
             {
                 Id = tradeItem.Id,
+                Status = tradeItem.Status,
                 Name = tradeItem.Name,
                 Description = tradeItem.Description,
                 Price = tradeItem.Price,

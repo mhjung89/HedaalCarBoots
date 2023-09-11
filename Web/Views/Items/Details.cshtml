@@ -1,4 +1,4 @@
-﻿@model TradeItemDto
+﻿@model TradeItemDetailViewModel
 
 @{
     ViewData["Title"] = "Details";
@@ -10,30 +10,58 @@
     <h4>TradeItem</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.TradeItem.Name)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.TradeItem.Name)
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.TradeItem.Description)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.TradeItem.Description)
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.TradeItem.Status)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.TradeItem.Status)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.TradeItem.Price)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.TradeItem.Price)
         </dd>
     </dl>
 </div>
 <div>
-    @if (Model.IsOwner)
+    @if (Model.TradeItem.IsOwner)
     {
-        <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> @("|")
+        <a asp-action="Edit" asp-route-id="@Model?.TradeItem.Id">Edit</a> @("|")
+        @Html.DropDownListFor(model => model.TradeItem.Status, Model.TradeItemStatusOptions, "상태 변경", new { id = "tradeItemStatusSelect", onchange = "setStatus()" }) @("|")
     }
     <a asp-action="Index">Back to List</a>
 </div>
+
+<script>
+    function setStatus() {
+        const status = $("#tradeItemStatusSelect").val();
+
+        $.ajax({
+            url: "/api/items/@Model.TradeItem.Id/status",
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify({
+                status
+            }),
+            success: function () {
+                location.reload();
+            },
+            error: function () {
+                alert("상태 변경에 실패했습니다.");
+            }
+        });
+    }
+</script>

@@ -27,7 +27,12 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            return View(tradeItem);
+            TradeItemDetailViewModel viewModel = new TradeItemDetailViewModel
+            {
+                TradeItem = tradeItem
+            };
+
+            return View(viewModel);
         }
 
         public IActionResult Create()
