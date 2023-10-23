@@ -41,7 +41,7 @@
                     @Html.DisplayFor(modelItem => item.Description)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Status)
+                    @item.Status.ToDescription()
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Price)
